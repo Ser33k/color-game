@@ -28,6 +28,8 @@ const App = () => {
   const [isCorrectAnswerOnRight, setIsCorrectAnswerOnRight] =
     useState<boolean>(false);
   const [isGameFinished, setIsGameFinished] = useState<boolean>(false);
+  const [startTime, setStartTime] = useState<number>(0);
+  const [totalTime, setTotalTime] = useState<number>(0);
 
   const generateNewRound = useCallback(() => {
     const wordIndex = Math.floor(Math.random() * COLORS.length);
@@ -50,34 +52,47 @@ const App = () => {
       }
 
       if (currentRound === TOTAL_ROUNDS) {
+        setTotalTime(Date.now() - startTime);
         setIsGameFinished(true);
       } else {
         setCurrentRound((prev) => prev + 1);
         generateNewRound();
       }
     },
-    [currentColor, currentRound, generateNewRound]
+    [currentColor, currentRound, generateNewRound, startTime]
   );
 
   const handleRestartGame = useCallback(() => {
     setCorrectAnswers(0);
     setCurrentRound(1);
     setIsGameFinished(false);
+    setStartTime(Date.now());
     generateNewRound();
   }, [generateNewRound]);
 
   useEffect(() => {
+    setStartTime(Date.now());
     generateNewRound();
   }, [generateNewRound]);
+
+  const formatTime = (ms: number): string => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
 
   if (isGameFinished) {
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
           <h1 className="text-4xl font-bold mb-8">Koniec gry!</h1>
-          <p className="text-3xl mb-8">
-            Poprawne odpowiedzi: {correctAnswers} z {TOTAL_ROUNDS}
-          </p>
+          <div className="space-y-4 mb-8">
+            <p className="text-3xl">
+              Poprawne odpowiedzi: {correctAnswers} z {TOTAL_ROUNDS}
+            </p>
+            <p className="text-3xl">Całkowity czas: {formatTime(totalTime)}</p>
+          </div>
           <button
             onClick={handleRestartGame}
             onKeyDown={(e) => e.key === "Enter" && handleRestartGame()}
